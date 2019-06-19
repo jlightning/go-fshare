@@ -12,7 +12,11 @@ type Config struct {
 }
 
 func NewConfig(username string, password string) *Config {
-	return &Config{Username: PointerString(username), Password: PointerString(password)}
+	return &Config{
+		Username:   PointerString(username),
+		Password:   PointerString(password),
+		HttpClient: http.DefaultClient,
+	}
 }
 
 func (cfg *Config) GetLoginURL() string {
