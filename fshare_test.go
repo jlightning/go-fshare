@@ -91,7 +91,7 @@ func TestClient_GetFolderURLs(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	res, err := client.GetFolderURLs("https://www.fshare.vn/folder/TPSSYSPYFT", 1)
+	res, err := client.GetFolderURLs("https://www.fshare.vn/folder/TPSSYSPYFT", 1, 10)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

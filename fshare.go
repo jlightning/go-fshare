@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -148,7 +149,8 @@ func (c *Client) GetAllFolderURLs(fshareFolderURL string) (res []string, err err
 				if !ok {
 					break
 				}
-				urls, err := c.GetFolderURLs(fshareFolderURL, page)
+				fmt.Println(page)
+				urls, err := c.GetFolderURLs(fshareFolderURL, page, 10)
 				if err != nil || len(urls) == 0 {
 					stopChannel <- err
 				}
@@ -173,16 +175,35 @@ forLoop:
 	}
 
 	wg.Wait()
+
+	fmt.Println(len(res))
+	page = len(res)
+	for {
+		urls, err := c.GetFolderURLs(fshareFolderURL, page, 1)
+		if err != nil || len(urls) == 0 {
+			break
+		}
+		res = append(res, urls...)
+		page++
+	}
+
+	for i := 1; i < len(res); i++ {
+		for j := 0; j < i; j++ {
+			if res[i] == res[j] {
+				fmt.Println("duplicated", i, j, res[i], res[j])
+			}
+		}
+	}
 	return
 }
 
-func (c *Client) GetFolderURLs(fshareFolderURL string, page int) (res []string, err error) {
+func (c *Client) GetFolderURLs(fshareFolderURL string, page int, limit int) (res []string, err error) {
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"token":     c.token,
 		"url":       fshareFolderURL,
 		"dirOnly":   0,
 		"pageIndex": page,
-		"limit":     1,
+		"limit":     limit,
 	})
 	if err != nil {
 		return nil, err

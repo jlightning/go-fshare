@@ -1,4 +1,5 @@
 # Go FShare Client
+Work in Progress.
 ## Sample code:
 ##### Get Download URL
 ```
