@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type commonApiResult struct {
@@ -133,18 +134,45 @@ func (c *Client) IsFolderUrl(url string) bool {
 }
 
 func (c *Client) GetAllFolderURLs(fshareFolderURL string) (res []string, err error) {
+	resLock := sync.Mutex{}
+	wg := sync.WaitGroup{}
+
+	pageChannel := make(chan int, 10)
+	stopChannel := make(chan error, 100)
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				page, ok := <-pageChannel
+				if !ok {
+					break
+				}
+				urls, err := c.GetFolderURLs(fshareFolderURL, page)
+				if err != nil || len(urls) == 0 {
+					stopChannel <- err
+				}
+				resLock.Lock()
+				res = append(res, urls...)
+				resLock.Unlock()
+			}
+		}()
+	}
+
 	page := 1
+
+forLoop:
 	for {
-		urls, err := c.GetFolderURLs(fshareFolderURL, page)
-		if err != nil {
-			return nil, err
+		select {
+		case pageChannel <- page:
+		case <-stopChannel:
+			close(pageChannel)
+			break forLoop
 		}
-		if len(urls) == 0 {
-			break
-		}
-		res = append(res, urls...)
 		page++
 	}
+
+	wg.Wait()
 	return
 }
 

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	fshare "go-fshare"
-	"os"
 )
 
 var (
@@ -24,17 +23,14 @@ func main() {
 		panic(err)
 	}
 
-	client.GetFileInfo(fshareUrl)
-	os.Exit(0)
-
 	if client.IsFolderUrl(fshareUrl) {
 		if urls, err := client.GetAllFolderURLs(fshareUrl); err != nil {
 			panic(err)
 		} else {
 			fmt.Println(len(urls))
-			for _, url := range urls {
-				fmt.Println(url)
-			}
+			//for _, url := range urls {
+			//	fmt.Println(url)
+			//}
 		}
 	} else {
 		if url, err := client.GetDownloadURL(fshareUrl); err != nil {
