@@ -22,9 +22,20 @@ func main() {
 	if err := client.Login(); err != nil {
 		panic(err)
 	}
-	if url, err := client.GetDownloadURL(fshareUrl); err != nil {
-		panic(err)
+
+	if client.IsFolderUrl(fshareUrl) {
+		if urls, err := client.GetFolderURLs(fshareUrl); err != nil {
+			panic(err)
+		} else {
+			for _, url := range urls {
+				fmt.Println(url)
+			}
+		}
 	} else {
-		fmt.Println(url)
+		if url, err := client.GetDownloadURL(fshareUrl); err != nil {
+			panic(err)
+		} else {
+			fmt.Println(url)
+		}
 	}
 }
