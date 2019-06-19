@@ -11,6 +11,10 @@ type Config struct {
 	downloadUrl *string
 }
 
+func NewConfig(username string, password string) *Config {
+	return &Config{Username: PointerString(username), Password: PointerString(password)}
+}
+
 func (cfg *Config) GetLoginURL() string {
 	if cfg.loginUrl != nil {
 		return *cfg.loginUrl
