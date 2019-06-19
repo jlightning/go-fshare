@@ -104,17 +104,57 @@ func (c *Client) GetDownloadURL(fshareURL string) (string, error) {
 	return downloadResult.Location, nil
 }
 
+func (c *Client) GetFileInfo(url string) ([]string, error) {
+	jsonData, err := json.Marshal(map[string]interface{}{
+		"token": c.token,
+		"url":   url,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", FileInfoURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: c.sessionID})
+	resp, err := c.cfg.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	logBody(&resp.Body)
+
+	return nil, nil
+}
+
 func (c *Client) IsFolderUrl(url string) bool {
 	return strings.HasPrefix(url, FolderBaseURL)
 }
 
-func (c *Client) GetFolderURLs(fshareFolderURL string) (res []string, err error) {
+func (c *Client) GetAllFolderURLs(fshareFolderURL string) (res []string, err error) {
+	page := 1
+	for {
+		urls, err := c.GetFolderURLs(fshareFolderURL, page)
+		if err != nil {
+			return nil, err
+		}
+		if len(urls) == 0 {
+			break
+		}
+		res = append(res, urls...)
+		page++
+	}
+	return
+}
+
+func (c *Client) GetFolderURLs(fshareFolderURL string, page int) (res []string, err error) {
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"token":     c.token,
 		"url":       fshareFolderURL,
 		"dirOnly":   0,
-		"pageIndex": 1,
-		"limit":     60,
+		"pageIndex": page,
+		"limit":     1,
 	})
 	if err != nil {
 		return nil, err
@@ -130,6 +170,8 @@ func (c *Client) GetFolderURLs(fshareFolderURL string) (res []string, err error)
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	logBody(&resp.Body)
 
 	var folderResult []folderResult
 	if err = json.NewDecoder(resp.Body).Decode(&folderResult); err != nil {
